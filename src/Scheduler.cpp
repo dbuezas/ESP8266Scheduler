@@ -1,9 +1,9 @@
 #include "Scheduler.h"
 
 extern "C" {
-    #include "cont.h"
+#include "cont.h"
 
-    void yield();
+void yield();
 }
 
 SchedulerClass Scheduler;
@@ -12,29 +12,26 @@ Task SchedulerClass::main;
 Task *SchedulerClass::current = &SchedulerClass::main;
 
 SchedulerClass::SchedulerClass() {
-    main.next = &main;
-    main.prev = &main;
+  main.next = &main;
+  main.prev = &main;
 }
 
 void SchedulerClass::start(Task *task) {
-    task->next = &main;
-    task->prev = main.prev;
+  task->next = &main;
+  task->prev = main.prev;
 
-    main.prev->next = task;
-    main.prev = task;
+  main.prev->next = task;
+  main.prev = task;
 }
 
 void SchedulerClass::begin() {
-    while (1) {
-        if (current->shouldRun())
-            cont_run(&current->context, task_tramponline);
+  while (1) {
+    if (current->shouldRun()) cont_run(&current->context, task_tramponline);
 
-        yield();
+    yield();
 
-        current = current->next;
-    }
+    current = current->next;
+  }
 }
 
-void task_tramponline() {
-    SchedulerClass::current->loopWrapper();
-}
+void task_tramponline() { SchedulerClass::current->loopWrapper(); }
