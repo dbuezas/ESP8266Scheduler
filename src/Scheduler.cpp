@@ -6,27 +6,24 @@ void yield();
 }
 
 SchedulerClass Scheduler;
-Task SchedulerClass::main;
-Task *SchedulerClass::current = &SchedulerClass::main;
+ITask *SchedulerClass::last = NULL;
+ITask *SchedulerClass::current = NULL;
+SchedulerClass::SchedulerClass() {}
 
-SchedulerClass::SchedulerClass() {
-  main.next = &main;
-  main.prev = &main;
-}
-
-void SchedulerClass::start(Task *task) {
-  task->next = &main;
-  task->prev = main.prev;
-  main.prev->next = task;
-  main.prev = task;
+void SchedulerClass::start(ITask *task) {
+  if (!last)
+    current = last = task;
+  else
+    last = last->next = task;
 }
 
 void SchedulerClass::begin() {
+  last->next = current;
   while (1) {
-    if (current->shouldRun()) cont_run(&current->context, task_tramponline);
-    yield();
+    current->resume();
     current = current->next;
+    yield();
   }
 }
 
-void task_tramponline() { SchedulerClass::current->loopWrapper(); }
+void task_tramponline() { ((Task *)SchedulerClass::current)->loopWrapper(); }

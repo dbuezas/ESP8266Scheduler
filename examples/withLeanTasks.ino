@@ -14,7 +14,7 @@ class PrintTask : public Task {
   }
 } print_task;
 
-class BlinkTask : public Task {
+class BlinkLeanTask : public LeanTask {
  protected:
   void setup() {
     state = HIGH;
@@ -26,13 +26,15 @@ class BlinkTask : public Task {
   void loop() {
     state = state == HIGH ? LOW : HIGH;
     pinMode(2, state);
-
-    delay(1000);
+    // lean tasks don't have a delay, but they consume no extra ram
+    // use schedule(ms) anywhere in your loop to indicate that the next cycle of
+    // the loop should happen x milliseconds in the future
+    schedule(1000);
   }
 
  private:
   uint8_t state;
-} blink_task;
+} blink_leanTask;
 
 class MemTask : public Task {
  public:
@@ -53,7 +55,7 @@ void setup() {
   delay(1000);
 
   Scheduler.start(&print_task);
-  Scheduler.start(&blink_task);
+  Scheduler.start(&blink_leanTask);
   Scheduler.start(&mem_task);
 
   Scheduler.begin();

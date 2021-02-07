@@ -8,19 +8,28 @@
 extern "C" {
 #include "cont.h"
 }
-
-class Task {
- public:
-  Task() { cont_init(&context); }
-
+void task_tramponline();
+class ITask {
  protected:
   virtual void setup() {}
   virtual void loop() {}
-  void yield() { cont_yield(&context); }
   virtual bool shouldRun() {
     unsigned long now = millis();
-    return !delay_ms || now - delay_time >= delay_ms;
+    return !delay_ms || now >= delay_time + delay_ms;
   }
+
+  unsigned long delay_time;
+  unsigned long delay_ms;
+
+ private:
+  friend class SchedulerClass;
+  virtual void resume() {}
+  ITask* next;
+};
+
+class Task : public ITask {
+ public:
+  Task() { cont_init(&context); }
   void delay(unsigned long ms) {
     if (ms) {
       delay_time = millis();
@@ -28,25 +37,40 @@ class Task {
     }
     yield();
   }
+  void yield() { cont_yield(&context); }
 
  private:
-  friend class SchedulerClass;
   friend void task_tramponline();
-  Task *next;
-  Task *prev;
   cont_t context;
-  bool setup_done = false;
-  unsigned long delay_time;
-  unsigned long delay_ms;
+  void resume() override {
+    if (shouldRun()) cont_run(&context, task_tramponline);
+  }
   void loopWrapper() {
-    if (!setup_done) {
-      setup();
-      setup_done = true;
-    }
+    setup();
     while (1) {
       loop();
       yield();
+    };
+  }
+};
+
+class LeanTask : public ITask {
+ protected:
+  void schedule(unsigned long ms) {
+    if (ms) {
+      delay_time = millis();
+      delay_ms = ms;
     }
+  }
+
+ private:
+  bool setup_done;
+  void resume() override {
+    if (!setup_done) {
+      setup();
+      setup_done = true;
+    } else if (shouldRun())
+      loop();
   }
 };
 #endif
