@@ -11,6 +11,8 @@ class SchedulerClass {
   SchedulerClass();
   static void start(ITask *task);
   static void begin();
+  static void delay(uint32_t);
+  static void yield();
 
  private:
   friend void task_tramponline();

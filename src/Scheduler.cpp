@@ -25,5 +25,6 @@ void SchedulerClass::begin() {
     yield();
   }
 }
-
+void SchedulerClass::delay(uint32_t ms) { SchedulerClass::current->delay(ms); }
+void SchedulerClass::yield() { SchedulerClass::current->yield(); }
 void task_tramponline() { ((Task *)SchedulerClass::current)->loopWrapper(); }

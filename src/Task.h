@@ -17,7 +17,8 @@ class ITask {
     unsigned long now = millis();
     return !delay_ms || now >= delay_time + delay_ms;
   }
-
+  virtual void delay(unsigned long ms);
+  virtual void yield();
   unsigned long delay_time;
   unsigned long delay_ms;
 
@@ -30,14 +31,14 @@ class ITask {
 class Task : public ITask {
  public:
   Task() { cont_init(&context); }
-  void delay(unsigned long ms) {
+  void delay(unsigned long ms) override {
     if (ms) {
       delay_time = millis();
       delay_ms = ms;
     }
     yield();
   }
-  void yield() { cont_yield(&context); }
+  void yield() override { cont_yield(&context); }
 
  private:
   friend void task_tramponline();
@@ -62,6 +63,8 @@ class LeanTask : public ITask {
       delay_ms = ms;
     }
   }
+  void delay(unsigned long ms) override { ::delay(ms); }
+  void yield() override { ::yield(); }
 
  private:
   bool setup_done;
